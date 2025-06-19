@@ -4,8 +4,11 @@
     "dev": "bun run --hot server/index.ts"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.0",
+    "@lucia-auth/adapter-drizzle": "^1.1.0",
     "drizzle-orm": "^0.44.2",
     "hono": "^4.7.11",
+    "lucia": "^3.2.2",
     "pg": "^8.16.1",
     "postgres": "^3.4.7",
     "zod": "^3.25.67"
