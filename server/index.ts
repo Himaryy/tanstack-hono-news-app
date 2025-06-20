@@ -4,6 +4,9 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { lucia } from "./lucia";
 import type { Context } from "./context";
+import { authRouter } from "./routes/auth";
+
+// TIMESTAMP 1:02:37
 
 const app = new Hono<Context>();
 
@@ -33,6 +36,9 @@ app.use("*", cors(), async (c, next) => {
   c.set("user", user);
   return next();
 });
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const routes = app.basePath("/api").route("/auth", authRouter);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
@@ -65,3 +71,4 @@ app.onError((err, c) => {
 });
 
 export default app;
+export type ApiRoutes = typeof routes;
