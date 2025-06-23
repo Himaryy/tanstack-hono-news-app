@@ -2,7 +2,7 @@ import { db } from "@/adapter";
 import type { Context } from "@/context";
 import { userTable } from "@/db/schemas/auth";
 import { lucia } from "@/lucia";
-import { loggedIn } from "@/middleware/LoggedIn";
+import { loggedIn } from "@/middleware/loggedIn";
 import { loginSchema, type SuccessResponse } from "@/shared/types";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";

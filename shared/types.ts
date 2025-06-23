@@ -1,3 +1,4 @@
+import { insertCommentsSchema } from "@/db/schemas/comments";
 import { insertPostSchema } from "@/db/schemas/posts";
 import { z } from "zod";
 
@@ -43,6 +44,28 @@ export const paginationSchema = z.object({
   author: z.string().optional(),
   site: z.string().optional(),
 });
+
+export const createCommentSchema = insertCommentsSchema.pick({ content: true });
+
+export type Comment = {
+  id: number;
+  userId: string;
+  content: string;
+  points: number;
+  depth: number;
+  commentCount: number;
+  createdAt: string;
+  postId: number;
+  parentCommentId: number | null;
+  commentUpvotes: {
+    userId: string;
+  }[];
+  author: {
+    username: string;
+    id: string;
+  };
+  childComments?: Comment[];
+};
 
 export type Post = {
   id: number;
