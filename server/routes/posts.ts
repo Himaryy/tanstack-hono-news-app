@@ -346,7 +346,7 @@ export const postRouter = new Hono<Context>()
       );
     }
   )
-
+  // Get post by id
   .get(
     "/:id",
     zValidator("param", z.object({ id: z.coerce.number() })),
