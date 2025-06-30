@@ -1,18 +1,20 @@
+import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { eq } from "drizzle-orm";
+
 import { db } from "@/adapter";
 import type { Context } from "@/context";
 import { userTable } from "@/db/schemas/auth";
 import { lucia } from "@/lucia";
 import { loggedIn } from "@/middleware/loggedIn";
-import { loginSchema, type SuccessResponse } from "@/shared/types";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
-import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
 import { generateId } from "lucia";
 import postgres from "postgres";
 
+import { loginSchema, type SuccessResponse } from "@/shared/types";
+
 export const authRouter = new Hono<Context>()
-  .post("/sign-up", zValidator("form", loginSchema), async (c) => {
+  .post("/signup", zValidator("form", loginSchema), async (c) => {
     const { username, password } = c.req.valid("form");
     const passwordHash = await Bun.password.hash(password);
     const userId = generateId(15);
@@ -32,13 +34,22 @@ export const authRouter = new Hono<Context>()
       return c.json<SuccessResponse>(
         {
           success: true,
-          message: "User Created",
+          message: "User created",
         },
         201
       );
-    } catch (error) {
-      if (error instanceof postgres.PostgresError && error.code === "23505") {
-        throw new HTTPException(409, { message: "Username already used" });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const pgError = error.cause;
+
+      if (
+        pgError instanceof postgres.PostgresError &&
+        pgError.code === "23505"
+      ) {
+        throw new HTTPException(409, {
+          message: "Username already used",
+          cause: { form: true },
+        });
       }
 
       throw new HTTPException(500, { message: "Failed to create user" });
@@ -55,7 +66,8 @@ export const authRouter = new Hono<Context>()
 
     if (!existingUser) {
       throw new HTTPException(401, {
-        message: "Incorrect Username",
+        message: "Incorrect username",
+        cause: { form: true },
       });
     }
 
@@ -63,10 +75,10 @@ export const authRouter = new Hono<Context>()
       password,
       existingUser.password_hash
     );
-
     if (!validPassword) {
       throw new HTTPException(401, {
-        message: "Incorrect Password",
+        message: "Incorrect password",
+        cause: { form: true },
       });
     }
 
@@ -78,28 +90,26 @@ export const authRouter = new Hono<Context>()
     return c.json<SuccessResponse>(
       {
         success: true,
-        message: "Logged In",
+        message: "Logged in",
       },
       200
     );
   })
   .get("/logout", async (c) => {
     const session = c.get("session");
-
     if (!session) {
       return c.redirect("/");
     }
 
     await lucia.invalidateSession(session.id);
     c.header("Set-Cookie", lucia.createBlankSessionCookie().serialize());
-
     return c.redirect("/");
   })
   .get("/user", loggedIn, async (c) => {
     const user = c.get("user")!;
     return c.json<SuccessResponse<{ username: string }>>({
       success: true,
-      message: "User Fetched",
+      message: "User fetched",
       data: { username: user.username },
     });
   });

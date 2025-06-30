@@ -4,7 +4,7 @@ import { postsTable } from "./posts";
 import { commentsTable } from "./comments";
 import { commentUpvotesTable, postUpvotesTable } from "./upvotes";
 
-export const userTable = pgTable("user", {
+export const userTable = pgTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   password_hash: text("password_hash").notNull(),

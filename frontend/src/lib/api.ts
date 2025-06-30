@@ -1,5 +1,5 @@
-import { hc, InferResponseType } from "hono/client";
-import type { ApiRoutes, SuccessResponse } from "@/shared/types";
+import type { ApiRoutes, ErrorResponse, SuccessResponse } from "@/shared/types";
+import { hc } from "hono/client";
 
 const client = hc<ApiRoutes>("/", {
   fetch: (input: RequestInfo | URL, init?: RequestInit) =>
@@ -9,14 +9,9 @@ const client = hc<ApiRoutes>("/", {
     }),
 }).api;
 
-// 4:59:25
-
-const signUp = client.auth["sign-up"].$post;
-type Test = InferResponseType<typeof signUp>;
-
 export const postSignup = async (username: string, password: string) => {
   try {
-    const response = await client.auth["sign-up"].$post({
+    const response = await client.auth.signup.$post({
       form: {
         username,
         password,
@@ -25,6 +20,16 @@ export const postSignup = async (username: string, password: string) => {
 
     if (response.ok) {
       const data = (await response.json()) as SuccessResponse;
+      return data;
     }
-  } catch (error) {}
+
+    const data = (await response.json()) as unknown as ErrorResponse;
+    return data;
+  } catch (error) {
+    return {
+      success: false as const,
+      error: String(error),
+      isFormError: false,
+    } as ErrorResponse;
+  }
 };
