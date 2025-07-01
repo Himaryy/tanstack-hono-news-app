@@ -1,5 +1,10 @@
 import React from "react";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback, zodSearchValidator } from "@tanstack/router-zod-adapter";
 import { useForm } from "@tanstack/react-form";
@@ -16,19 +21,18 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import FieldInfo from "@/components/FieldInfo";
 import { Button } from "@/components/ui/button";
-import { postSignup, userQueryOption } from "@/lib/api";
+import { postLogin, userQueryOption } from "@/lib/api";
 import { toast } from "sonner";
-import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-const signUpSearchSchema = z.object({
+const loginSearchSchema = z.object({
   redirect: fallback(z.string(), "/").default("/"),
 });
 
-export const Route = createFileRoute("/signup")({
-  component: SignUp,
-  validateSearch: zodSearchValidator(signUpSearchSchema),
+export const Route = createFileRoute("/login")({
+  component: Login,
+  validateSearch: zodSearchValidator(loginSearchSchema),
   // logic to redirect if user is already logged in
   beforeLoad: async ({ context, search }) => {
     const user = await context.queryClient.ensureQueryData(userQueryOption());
@@ -39,7 +43,7 @@ export const Route = createFileRoute("/signup")({
   },
 });
 
-function SignUp() {
+function Login() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const router = useRouter();
@@ -55,7 +59,7 @@ function SignUp() {
       onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      const response = await postSignup(value.username, value.password);
+      const response = await postLogin(value.username, value.password);
       if (response.success) {
         await queryClient.invalidateQueries({ queryKey: ["user"] });
         router.invalidate();
@@ -65,7 +69,7 @@ function SignUp() {
         return null;
       } else {
         if (!response.isFormError) {
-          toast.error("Sign Up Failed", {
+          toast.error("Login Failed", {
             description: response.error,
           });
         }
@@ -89,10 +93,8 @@ function SignUp() {
           }}
         >
           <CardHeader>
-            <CardTitle className="text-center text-2xl">Sign Up</CardTitle>
-            <CardDescription>
-              Enter your details below to create an account
-            </CardDescription>
+            <CardTitle className="text-center text-2xl">Login</CardTitle>
+            <CardDescription>Enter your details below to login</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -158,16 +160,16 @@ function SignUp() {
                     disabled={!canSubmit}
                     className="w-full"
                   >
-                    {isSubmitting ? "Signin Up..." : "Sign Up"}
+                    {isSubmitting ? "Logged In..." : "Login"}
                   </Button>
                 )}
               />
             </div>
 
             <div className="mt-4 text-center text-sm">
-              Already have an account ? {""}
-              <Link to="/login" className="underline">
-                Login
+              Dont have an account ? {""}
+              <Link to="/signup" className="underline">
+                Sign Up
               </Link>
             </div>
           </CardContent>
