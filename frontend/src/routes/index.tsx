@@ -10,6 +10,7 @@ import {
 import { getPosts } from "@/lib/api";
 import SortBar from "@/components/SortBar";
 import PostCard from "@/components/PostCard";
+import { Button } from "@/components/ui/button";
 
 const homeSearchSchema = z.object({
   sortBy: fallback(sortBySchema, "points").default("recent"),
@@ -67,9 +68,23 @@ function HomeComponent() {
       <h1 className="mb-6 text-2xl font-bold text-foreground">Submissions</h1>
       <SortBar sortBy={sortBy} order={order} />
 
-      {data?.pages.map((page) =>
-        page.data.map((post) => <PostCard key={post.id} post={post} />)
-      )}
+      <div className="space-y-4">
+        {data?.pages.map((page) =>
+          page.data.map((post) => <PostCard key={post.id} post={post} />)
+        )}
+      </div>
+      <div className="mt-6">
+        <Button
+          onClick={() => fetchNextPage()}
+          disabled={!hasNextPage || isFetchingNextPage}
+        >
+          {isFetchingNextPage
+            ? "Loading More..."
+            : hasNextPage
+              ? "Load More"
+              : "Nothing More"}
+        </Button>
+      </div>
     </div>
   );
 }
