@@ -1,0 +1,67 @@
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Order, SortBy } from "@/shared/types";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "./ui/button";
+import { ArrowUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const SortBar = ({ sortBy, order }: { sortBy: SortBy; order: Order }) => {
+  const navigate = useNavigate();
+  return (
+    <div className="mb-4 flex items-center justify-between">
+      <Select
+        value={sortBy}
+        onValueChange={(sortBy: SortBy) =>
+          navigate({
+            to: ".",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            search: (prev: any) => ({
+              ...prev,
+              sortBy,
+            }),
+          })
+        }
+      >
+        <SelectTrigger className="w-[180px] bg-background">
+          <SelectValue />
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectItem value="points">Points</SelectItem>
+          <SelectItem value="recent">Recent</SelectItem>
+        </SelectContent>
+      </Select>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => {
+          navigate({
+            to: ".",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            search: (prev: any) => ({
+              ...prev,
+              order: order === "asc" ? "desc" : "asc",
+            }),
+          });
+        }}
+        aria-label={order === "asc" ? "Sort Descending" : "Sort Ascending"}
+      >
+        <ArrowUp
+          className={cn(
+            "size-4 transition-transform duration-300",
+            order === "desc" && "rotate-180"
+          )}
+        />
+      </Button>
+    </div>
+  );
+};
+
+export default SortBar;

@@ -1,4 +1,10 @@
-import type { ApiRoutes, ErrorResponse, SuccessResponse } from "@/shared/types";
+import type {
+  ApiRoutes,
+  ErrorResponse,
+  Order,
+  SortBy,
+  SuccessResponse,
+} from "@/shared/types";
 import { queryOptions } from "@tanstack/react-query";
 import { hc } from "hono/client";
 
@@ -67,6 +73,37 @@ export const getUser = async () => {
     return data;
   }
   return null;
+};
+
+export const getPosts = async ({
+  pageParam = 1,
+  pagination,
+}: {
+  pageParam: number;
+  pagination: {
+    sortBy?: SortBy;
+    order?: Order;
+    author?: string;
+    site?: string;
+  };
+}) => {
+  const response = await client.posts.$get({
+    query: {
+      page: pageParam.toString(),
+      sortBy: pagination.sortBy,
+      order: pagination.order,
+      author: pagination.author,
+      site: pagination.site,
+    },
+  });
+
+  if (!response.ok) {
+    const data = (await response.json()) as unknown as ErrorResponse;
+    throw new Error(data.error);
+  }
+
+  const data = await response.json();
+  return data;
 };
 
 export const userQueryOption = () =>

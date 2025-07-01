@@ -41,7 +41,7 @@ const SiteHeader = () => {
           </nav>
         </div>
 
-        <div className="hidden items-center space-x-4">
+        <div className="hidden items-center space-x-4 md:flex">
           {user ? (
             <>
               <span className="">{user.data.username}</span>
