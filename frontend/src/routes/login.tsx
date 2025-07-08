@@ -71,6 +71,8 @@ function Login() {
         if (!response.isFormError) {
           toast.error("Login Failed", {
             description: response.error,
+            richColors: true,
+            style: { backgroundColor: "#dc2626", color: "white" },
           });
         }
         form.setErrorMap({

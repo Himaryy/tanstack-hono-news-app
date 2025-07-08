@@ -1,10 +1,16 @@
-import React from "react";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
-import { fallback, zodSearchValidator } from "@tanstack/router-zod-adapter";
+import * as React from "react";
+import {
+  createFileRoute,
+  useBlocker,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
-import { loginSchema } from "@/shared/types";
+import { createPostSchema } from "@/shared/types";
+import { postSubmit } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -15,57 +21,39 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import FieldInfo from "@/components/FieldInfo";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { postSignup, userQueryOption } from "@/lib/api";
-import { toast } from "sonner";
-import { useRouter } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 
-const signUpSearchSchema = z.object({
-  redirect: fallback(z.string(), "/").default("/"),
+export const Route = createFileRoute("/_auth/submit")({
+  component: SubmitComponent,
 });
 
-export const Route = createFileRoute("/signup")({
-  component: SignUp,
-  validateSearch: zodSearchValidator(signUpSearchSchema),
-  // logic to redirect if user is already logged in
-  beforeLoad: async ({ context, search }) => {
-    const user = await context.queryClient.ensureQueryData(userQueryOption());
-
-    if (user) {
-      throw redirect({ to: search.redirect });
-    }
-  },
-});
-
-function SignUp() {
-  const search = Route.useSearch();
-  const navigate = useNavigate();
-  const router = useRouter();
+function SubmitComponent() {
   const queryClient = useQueryClient();
-
+  const router = useRouter();
+  const navigate = useNavigate();
   const form = useForm({
     defaultValues: {
-      username: "",
-      password: "",
+      title: "",
+      url: "",
+      content: "",
     },
     validatorAdapter: zodValidator(),
     validators: {
-      onChange: loginSchema,
+      onChange: createPostSchema,
     },
     onSubmit: async ({ value }) => {
-      const response = await postSignup(value.username, value.password);
+      const response = await postSubmit(value.title, value.url, value.content);
+
       if (response.success) {
-        await queryClient.invalidateQueries({ queryKey: ["user"] });
+        await queryClient.invalidateQueries({ queryKey: ["posts"] });
         router.invalidate();
-        await navigate({
-          to: search.redirect,
-        });
-        return null;
+
+        await navigate({ to: "/post", search: { id: response.data.postId } });
+        return;
       } else {
         if (!response.isFormError) {
-          toast.error("Sign Up Failed", {
+          toast.error("Failed to create post", {
             description: response.error,
             richColors: true,
             style: { backgroundColor: "#dc2626", color: "white" },
@@ -74,37 +62,47 @@ function SignUp() {
         form.setErrorMap({
           onSubmit: response.isFormError
             ? response.error
-            : "An error occurred during sign up",
+            : "Unexpected Error Occured ",
         });
       }
     },
   });
 
+  // const shouldBlock = form.useStore(
+  //   (state) => state.isDirty && !state.isSubmitting
+  // );
+  useBlocker({
+    shouldBlockFn: () => window.confirm("Are you sure want to leave ?"),
+  });
+
   return (
     <div className="w-full">
-      <Card className="mx-auto mt-12 max-w-sm border/25">
+      <Card className="mx-auto mt-12 max-w-lg border-border/25">
+        <CardHeader>
+          <CardTitle>Create New Post</CardTitle>
+          <CardDescription>
+            Leave url blank to submit a question for discussion. if there is no
+            url, text will appear at the top of the thread. if there is a url,
+            text is optional.
+          </CardDescription>
+        </CardHeader>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
             form.handleSubmit();
           }}
+          className="grid gap-4"
         >
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">Sign Up</CardTitle>
-            <CardDescription>
-              Enter your details below to create an account
-            </CardDescription>
-          </CardHeader>
-
           <CardContent>
             <div className="grid gap-4">
               <form.Field
-                name="username"
+                name="title"
                 // eslint-disable-next-line react/no-children-prop
                 children={(field) => (
                   <div className="grid gap-2">
-                    <Label htmlFor={field.name}>Username</Label>
+                    <Label htmlFor={field.name}>Title</Label>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -112,40 +110,54 @@ function SignUp() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                     />
-
                     <FieldInfo field={field} />
                   </div>
                 )}
               />
 
               <form.Field
-                name="password"
+                name="url"
                 // eslint-disable-next-line react/no-children-prop
                 children={(field) => (
                   <div className="grid gap-2">
-                    <Label htmlFor={field.name}>Password</Label>
+                    <Label htmlFor={field.name}>Url</Label>
                     <Input
-                      type="password"
                       id={field.name}
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                     />
-
                     <FieldInfo field={field} />
                   </div>
                 )}
               />
 
-              {/* Give error from backend if username already taken */}
+              <form.Field
+                name="content"
+                // eslint-disable-next-line react/no-children-prop
+                children={(field) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor={field.name}>Content</Label>
+                    <Textarea
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                    <FieldInfo field={field} />
+                  </div>
+                )}
+              />
+
               <form.Subscribe
                 selector={(state) => [state.errorMap]}
                 // eslint-disable-next-line react/no-children-prop
                 children={([errorMap]) =>
                   errorMap.onSubmit ? (
                     <p className="text-[0.8rem] font-medium text-destructive">
-                      {errorMap.onSubmit?.toString()}
+                      {errorMap.onSubmit.toString()}
                     </p>
                   ) : null
                 }
@@ -160,17 +172,10 @@ function SignUp() {
                     disabled={!canSubmit}
                     className="w-full"
                   >
-                    {isSubmitting ? "Signin Up..." : "Sign Up"}
+                    {isSubmitting ? "Submitting..." : "Submit"}
                   </Button>
                 )}
               />
-            </div>
-
-            <div className="mt-4 text-center text-sm">
-              Already have an account ? {""}
-              <Link to="/login" className="underline">
-                Login
-              </Link>
             </div>
           </CardContent>
         </form>

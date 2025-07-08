@@ -61,7 +61,7 @@ const SiteHeader = () => {
               variant="secondary"
               className="bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/70"
             >
-              <Link to="/">Login</Link>
+              <Link to="/login">Login</Link>
             </Button>
           )}
         </div>

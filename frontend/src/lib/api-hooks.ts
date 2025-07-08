@@ -73,7 +73,10 @@ export const useUpvotePost = () => {
     },
     onError: (err, variable, context) => {
       console.error(err);
-      toast.error("Failed to upvote post");
+      toast.error("Failed to upvote post", {
+        richColors: true,
+        style: { backgroundColor: "#dc2626", color: "white" },
+      });
       if (context?.prevData) {
         queryClient.setQueriesData(
           {
