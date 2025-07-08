@@ -11,6 +11,9 @@ import { getPosts } from "@/lib/api";
 import SortBar from "@/components/SortBar";
 import PostCard from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
+import { useUpvotePost } from "@/lib/api-hooks";
+
+// 6:39 ApiHooks
 
 const homeSearchSchema = z.object({
   sortBy: fallback(sortBySchema, "points").default("recent"),
@@ -63,6 +66,8 @@ function HomeComponent() {
         site,
       })
     );
+
+  const upvoteMutation = useUpvotePost();
   return (
     <div className="mx-auto max-w-3xl p-4">
       <h1 className="mb-6 text-2xl font-bold text-foreground">Submissions</h1>
@@ -70,7 +75,13 @@ function HomeComponent() {
 
       <div className="space-y-4">
         {data?.pages.map((page) =>
-          page.data.map((post) => <PostCard key={post.id} post={post} />)
+          page.data.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onUpvote={() => upvoteMutation.mutate(post.id.toString())}
+            />
+          ))
         )}
       </div>
       <div className="mt-6">
