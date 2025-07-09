@@ -7,6 +7,7 @@ import type {
 } from "@/shared/types";
 import { queryOptions } from "@tanstack/react-query";
 import { hc, InferResponseType } from "hono/client";
+import { notFound } from "@tanstack/react-router";
 
 const client = hc<ApiRoutes>("/", {
   fetch: (input: RequestInfo | URL, init?: RequestInit) =>
@@ -137,7 +138,6 @@ export const postSubmit = async (
   content: string
 ) => {
   try {
-    throw new Error("Unexpected");
     const response = await client.posts.$post({
       form: {
         title,
@@ -159,5 +159,25 @@ export const postSubmit = async (
       error: String(error),
       isFormError: false,
     } as ErrorResponse;
+  }
+};
+
+export const getPost = async (id: string) => {
+  const response = await client.posts[":id"].$get({
+    param: {
+      id: id.toString(),
+    },
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    if (response.status === 404) {
+      throw notFound();
+    }
+
+    const data = (await response.json()) as unknown as ErrorResponse;
+    throw new Error(data.error);
   }
 };

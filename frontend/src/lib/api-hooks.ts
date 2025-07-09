@@ -1,4 +1,4 @@
-import { Post } from "@/shared/types";
+import { Post, SuccessResponse } from "@/shared/types";
 import {
   InfiniteData,
   useMutation,
@@ -24,6 +24,18 @@ export const useUpvotePost = () => {
         queryKey: ["post", Number(variable)],
       });
 
+      // upvote for single content in spesific content
+      queryClient.setQueryData<SuccessResponse<Post>>(
+        ["post", Number(variable)],
+        produce((draft) => {
+          if (!draft) {
+            return undefined;
+          }
+          updatePostUpvote(draft.data);
+        })
+      );
+
+      // upvote for all content in homepage
       queryClient.setQueriesData<InfiniteData<GetPostsSuccess>>(
         {
           queryKey: ["posts"],
@@ -47,6 +59,17 @@ export const useUpvotePost = () => {
       return { prevData };
     },
     onSuccess: (upvoteData, variable) => {
+      queryClient.setQueryData<SuccessResponse<Post>>(
+        ["post", Number(variable)],
+        produce((draft) => {
+          if (!draft) {
+            return undefined;
+          }
+          draft.data.points = upvoteData.data.count;
+          draft.data.isUpvoted = upvoteData.data.isUpvoted;
+        })
+      );
+
       queryClient.setQueriesData<InfiniteData<GetPostsSuccess>>(
         {
           queryKey: ["posts"],
@@ -73,6 +96,11 @@ export const useUpvotePost = () => {
     },
     onError: (err, variable, context) => {
       console.error(err);
+
+      queryClient.invalidateQueries({
+        queryKey: ["post", Number(variable)],
+      });
+
       toast.error("Failed to upvote post", {
         richColors: true,
         style: { backgroundColor: "#dc2626", color: "white" },

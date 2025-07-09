@@ -357,6 +357,7 @@ export const postRouter = new Hono<Context>()
         .select({
           id: postsTable.id,
           title: postsTable.title,
+          content: postsTable.content,
           url: postsTable.url,
           points: postsTable.points,
           createdAt: getISOFormatDateQuery(postsTable.createdAt),
