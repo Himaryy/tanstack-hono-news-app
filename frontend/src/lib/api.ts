@@ -162,7 +162,7 @@ export const postSubmit = async (
   }
 };
 
-export const getPost = async (id: string) => {
+export const getPost = async (id: number) => {
   const response = await client.posts[":id"].$get({
     param: {
       id: id.toString(),
@@ -181,3 +181,34 @@ export const getPost = async (id: string) => {
     throw new Error(data.error);
   }
 };
+
+export async function getComments(
+  id: number,
+  page: number = 1,
+  limit: number = 1,
+  pagination: {
+    sortBy?: SortBy;
+    order?: Order;
+  }
+) {
+  const response = await client.posts[":id"].comments.$get({
+    param: {
+      id: id.toString(),
+    },
+    query: {
+      page: page.toString(),
+      limit: limit.toString(),
+      includeChildren: "true",
+      sortBy: pagination.sortBy,
+      order: pagination.order,
+    },
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    const data = (await response.json()) as unknown as ErrorResponse;
+    throw new Error(data.error);
+  }
+}
