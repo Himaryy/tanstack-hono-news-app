@@ -185,7 +185,7 @@ export const getPost = async (id: number) => {
 export async function getComments(
   id: number,
   page: number = 1,
-  limit: number = 1,
+  limit: number = 10,
   pagination: {
     sortBy?: SortBy;
     order?: Order;
@@ -211,4 +211,43 @@ export async function getComments(
     const data = (await response.json()) as unknown as ErrorResponse;
     throw new Error(data.error);
   }
+}
+
+export async function getCommentComments(
+  id: number,
+  page: number = 1,
+  limit: number = 2
+) {
+  const response = await client.comments[":id"].comments.$get({
+    param: {
+      id: id.toString(),
+    },
+    query: {
+      page: page.toString(),
+      limit: limit.toString(),
+    },
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    const data = (await response.json()) as unknown as ErrorResponse;
+    throw new Error(data.error);
+  }
+}
+
+export async function upvoteComments(id: string) {
+  const response = await client.comments[":id"].upvote.$post({
+    param: {
+      id,
+    },
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const data = (await response.json()) as unknown as ErrorResponse;
+  throw Error(data.error);
 }

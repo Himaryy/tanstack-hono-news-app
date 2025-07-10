@@ -11,10 +11,11 @@ import {
 } from "@tanstack/react-query";
 import { getComments, getPost } from "@/lib/api";
 import PostCard from "@/components/PostCard";
-import { useUpvotePost } from "@/lib/api-hooks";
+import { useUpvoteComment, useUpvotePost } from "@/lib/api-hooks";
 import SortBar from "@/components/SortBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { CommentsCard } from "@/components/CommentsCard";
+import { ChevronDownIcon } from "lucide-react";
 
 const postSearchSchema = z.object({
   id: fallback(z.number(), 0).default(0),
@@ -73,6 +74,7 @@ function PostComponent() {
   );
 
   const upvotePost = useUpvotePost();
+  const upvoteComment = useUpvoteComment();
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -101,9 +103,30 @@ function PostComponent() {
                   activeReplyId={activeReplyId}
                   setActiveReplyId={setActiveReplyId}
                   isLast={index === page.data.length - 1}
-                  toggleUpvote={() => console.log("Upvote ngab")}
+                  toggleUpvote={upvoteComment.mutate}
                 />
               ))
+            )}
+
+            {hasNextPage && (
+              <div className="mt-2">
+                <button
+                  className="flex items-center text-xs space-x-1 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    fetchNextPage();
+                  }}
+                  disabled={!hasNextPage || isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <span>Loading more...</span>
+                  ) : (
+                    <>
+                      <ChevronDownIcon size={12} />
+                      <span>More Replies</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </CardContent>
         </Card>
