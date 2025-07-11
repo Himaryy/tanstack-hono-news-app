@@ -1,21 +1,25 @@
 import React, { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { fallback, zodSearchValidator } from "@tanstack/router-zod-adapter";
-import { orderSchema, sortBySchema } from "@/shared/types";
 import {
   infiniteQueryOptions,
   queryOptions,
+  useQuery,
   useSuspenseInfiniteQuery,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { getComments, getPost } from "@/lib/api";
-import PostCard from "@/components/PostCard";
-import { useUpvoteComment, useUpvotePost } from "@/lib/api-hooks";
-import SortBar from "@/components/SortBar";
-import { Card, CardContent } from "@/components/ui/card";
-import { CommentsCard } from "@/components/CommentsCard";
+import { fallback, zodSearchValidator } from "@tanstack/router-zod-adapter";
+
 import { ChevronDownIcon } from "lucide-react";
+import { z } from "zod";
+
+import { orderSchema, sortBySchema } from "@/shared/types";
+import { getComments, getPost, userQueryOption } from "@/lib/api";
+import { useUpvoteComment, useUpvotePost } from "@/lib/api-hooks";
+import { Card, CardContent } from "@/components/ui/card";
+import PostCard from "@/components/PostCard";
+import { CommentForm } from "@/components/CommentForm";
+import SortBar from "@/components/SortBar";
+import { CommentCard } from "@/components/CommentsCard";
 
 const postSearchSchema = z.object({
   id: fallback(z.number(), 0).default(0),
@@ -56,14 +60,24 @@ const commentsInfiniteQueryOptions = ({
   });
 
 export const Route = createFileRoute("/post")({
-  component: PostComponent,
+  component: () => <Post />,
   validateSearch: zodSearchValidator(postSearchSchema),
+  loaderDeps: ({ search: { id, sortBy, order } }) => ({ id, sortBy, order }),
+  loader: async ({ context, deps: { id, sortBy, order } }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(postQueryOptions(id)),
+      context.queryClient.ensureInfiniteQueryData(
+        commentsInfiniteQueryOptions({ id, sortBy, order })
+      ),
+    ]);
+  },
 });
 
-function PostComponent() {
+function Post() {
   const { id, sortBy, order } = Route.useSearch();
   const [activeReplyId, setActiveReplyId] = useState<number | null>(null);
   const { data } = useSuspenseQuery(postQueryOptions(id));
+  const { data: user } = useQuery(userQueryOption());
   const {
     data: comments,
     hasNextPage,
@@ -85,18 +99,28 @@ function PostComponent() {
         />
       )}
       <div className="mb-4 mt-8">
-        <h2 className="mb-2 text-lg font-semibold text-foreground">Comments</h2>
+        {comments && comments.pages[0].data.length > 0 && (
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            Comments
+          </h2>
+        )}
+        {user && (
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <CommentForm id={id} />
+            </CardContent>
+          </Card>
+        )}
         {comments && comments.pages[0].data.length > 0 && (
           <SortBar sortBy={sortBy} order={order} />
         )}
       </div>
-
       {comments && comments.pages[0].data.length > 0 && (
         <Card>
           <CardContent className="p-4">
             {comments.pages.map((page) =>
               page.data.map((comment, index) => (
-                <CommentsCard
+                <CommentCard
                   key={comment.id}
                   comment={comment}
                   depth={0}
@@ -107,22 +131,21 @@ function PostComponent() {
                 />
               ))
             )}
-
             {hasNextPage && (
               <div className="mt-2">
                 <button
-                  className="flex items-center text-xs space-x-1 text-muted-foreground hover:text-foreground"
+                  className="flex items-center space-x-1 text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => {
                     fetchNextPage();
                   }}
                   disabled={!hasNextPage || isFetchingNextPage}
                 >
                   {isFetchingNextPage ? (
-                    <span>Loading more...</span>
+                    <span>Loading...</span>
                   ) : (
                     <>
                       <ChevronDownIcon size={12} />
-                      <span>More Replies</span>
+                      <span>More replies</span>
                     </>
                   )}
                 </button>
