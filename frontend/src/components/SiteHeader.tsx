@@ -29,13 +29,21 @@ const SiteHeader = () => {
             HimaryNews
           </Link>
           <nav className="hidden items-center space-x-4 md:flex">
-            <Link to="/" className="hover:underline">
+            <Link
+              to="/"
+              search={{ sortBy: "recent", order: "desc" }}
+              className="hover:underline"
+            >
               New
             </Link>
-            <Link to="/" className="hover:underline">
+            <Link
+              to="/"
+              search={{ sortBy: "points", order: "desc" }}
+              className="hover:underline"
+            >
               Top
             </Link>
-            <Link to="/" className="hover:underline">
+            <Link to="/submit" className="hover:underline">
               Submit
             </Link>
           </nav>
@@ -84,21 +92,23 @@ const SiteHeader = () => {
             <nav className="flex flex-col space-y-4">
               <Link
                 onClick={() => setIsOpen(false)}
-                to="/"
+                to={"/"}
+                search={{ sortBy: "recent", order: "desc" }}
                 className="hover:underline"
               >
                 New
               </Link>
               <Link
                 onClick={() => setIsOpen(false)}
-                to="/"
+                to={"/"}
+                search={{ sortBy: "points", order: "desc" }}
                 className="hover:underline"
               >
                 Top
               </Link>
               <Link
                 onClick={() => setIsOpen(false)}
-                to="/"
+                to="/submit"
                 className="hover:underline"
               >
                 Submit
