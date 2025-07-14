@@ -7,6 +7,7 @@ import type { Context } from "./context";
 import { authRouter } from "./routes/auth";
 import { postRouter } from "./routes/posts";
 import { commentsRouter } from "./routes/comments";
+import { serveStatic } from "hono/bun";
 
 // TIMESTAMP 1:02:37
 
@@ -39,7 +40,6 @@ app.use("*", cors(), async (c, next) => {
   return next();
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
   .basePath("/api")
   .route("/auth", authRouter)
@@ -76,6 +76,15 @@ app.onError((err, c) => {
   );
 });
 
-export default app;
+app.get("*", serveStatic({ root: "./frontend/dist" }));
+app.get("*", serveStatic({ root: "./frontend/dist/index.html" }));
+
+export default {
+  port: process.env.PORT || 3000,
+  hostname: "0.0.0.0",
+  fetch: app.fetch,
+};
+console.log("Server running on port: ", process.env.PORT || 3000);
+
 export type ApiRoutes = typeof routes;
 export { routes };
